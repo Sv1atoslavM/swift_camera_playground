@@ -26,34 +26,19 @@
                                 <color key="textColor" systemColor="systemRedColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pmn-82-WNA">
-                                <rect key="frame" x="24" y="788" width="366" height="66"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="filled" title="😃" subtitle="Chease!" cornerStyle="capsule" titleAlignment="center">
-                                    <fontDescription key="titleFontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="24"/>
-                                    <fontDescription key="subtitleFontDescription" type="system" pointSize="14"/>
-                                </buttonConfiguration>
-                                <connections>
-                                    <action selector="onPhotoPressed:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Ihy-Mx-FJ3"/>
-                                </connections>
-                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="Y9Q-ho-dKF" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="2Ms-Xe-MKx"/>
                             <constraint firstItem="Raz-M1-pFk" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="8" id="76U-no-XCU"/>
-                            <constraint firstItem="pmn-82-WNA" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="24" id="DIX-Hd-uib"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Y9Q-ho-dKF" secondAttribute="trailing" id="SxQ-vk-WnO"/>
                             <constraint firstItem="Y9Q-ho-dKF" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="Ug7-BV-qSz"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="pmn-82-WNA" secondAttribute="bottom" constant="8" id="WZB-dz-G5q"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="Y9Q-ho-dKF" secondAttribute="bottom" id="fVw-C6-rK5"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="pmn-82-WNA" secondAttribute="trailing" constant="24" id="h0A-ty-bm1"/>
                             <constraint firstItem="Raz-M1-pFk" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="jYr-Ue-dpp"/>
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="captureButton" destination="pmn-82-WNA" id="eQL-Jr-FqT"/>
                         <outlet property="messageLabel" destination="Raz-M1-pFk" id="qr4-uf-RLZ"/>
                         <outlet property="previewView" destination="Y9Q-ho-dKF" id="aPI-Wn-it0"/>
                     </connections>

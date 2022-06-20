@@ -13,6 +13,7 @@
 		809C47A22852399C00A15917 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 809C47A02852399C00A15917 /* Main.storyboard */; };
 		809C47A42852399C00A15917 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 809C47A32852399C00A15917 /* Assets.xcassets */; };
 		809C47A72852399C00A15917 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 809C47A52852399C00A15917 /* LaunchScreen.storyboard */; };
+		80BEC28A285FD85300E616B3 /* Resnet50.mlkitmodel in Sources */ = {isa = PBXBuildFile; fileRef = 80BEC289285FD85300E616B3 /* Resnet50.mlkitmodel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 		809C47A32852399C00A15917 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		809C47A62852399C00A15917 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		809C47A82852399C00A15917 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		80BEC289285FD85300E616B3 /* Resnet50.mlkitmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = Resnet50.mlkitmodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +65,7 @@
 				809C47A32852399C00A15917 /* Assets.xcassets */,
 				809C47A52852399C00A15917 /* LaunchScreen.storyboard */,
 				809C47A82852399C00A15917 /* Info.plist */,
+				80BEC289285FD85300E616B3 /* Resnet50.mlkitmodel */,
 			);
 			path = CameraPlayground;
 			sourceTree = "<group>";
@@ -139,6 +142,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				809C479F2852399C00A15917 /* ViewController.swift in Sources */,
+				80BEC28A285FD85300E616B3 /* Resnet50.mlkitmodel in Sources */,
 				809C479B2852399C00A15917 /* AppDelegate.swift in Sources */,
 				809C479D2852399C00A15917 /* SceneDelegate.swift in Sources */,
 			);
