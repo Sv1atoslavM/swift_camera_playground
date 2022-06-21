@@ -17,8 +17,11 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     // Helps to transfer data between one or more device inputs like camera or microphone
     let captureSession = AVCaptureSession()
     // Helps to render the camera view finder in the ViewController
-    lazy var previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+    var previewLayer: AVCaptureVideoPreviewLayer!
 
+    var bufferSize: CGSize = .zero
+    var rootLayer: CALayer! = nil
+    
     
     override func viewDidAppear(_ animated: Bool) {
         captureSession.startRunning()
@@ -31,26 +34,61 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        captureSession.beginConfiguration()
+        captureSession.sessionPreset = .vga640x480
+        
         guard let captureDevice = AVCaptureDevice.default(for: .video) else { return }
         guard let input = try? AVCaptureDeviceInput(device: captureDevice) else { return }
         
-        captureSession.sessionPreset = .photo
-        captureSession.addInput(input)
-        
-        previewLayer.videoGravity = .resizeAspectFill
-        previewLayer.frame = view.frame
-        view.layer.addSublayer(previewLayer)
-        view.addSubview(messageLabel)
+        if captureSession.canAddInput(input) {
+            captureSession.addInput(input)
+        } else {
+            print("Could not add video device input to the session")
+            captureSession.commitConfiguration()
+            return
+        }
         
         let videoDataOutput = AVCaptureVideoDataOutput()
-        videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
-        captureSession.addOutput(videoDataOutput)
+        
+        if captureSession.canAddOutput(videoDataOutput) {
+            videoDataOutput.alwaysDiscardsLateVideoFrames = true
+            videoDataOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
+            videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
+            captureSession.addOutput(videoDataOutput)
+        } else {
+            print("Could not add video data output to the session")
+            captureSession.commitConfiguration()
+            return
+        }
+        
+        let captureConnection = videoDataOutput.connection(with: .video)
+        
+        // Always process the frames
+        captureConnection?.isEnabled = true
+        do {
+            try captureDevice.lockForConfiguration()
+            let dimensions = CMVideoFormatDescriptionGetDimensions(captureDevice.activeFormat.formatDescription)
+            bufferSize.width = CGFloat(dimensions.width)
+            bufferSize.height = CGFloat(dimensions.height)
+            captureDevice.unlockForConfiguration()
+        } catch {
+            print(error)
+        }
+        
+        captureSession.commitConfiguration()
+        
+        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer.videoGravity = .resizeAspectFill
+        rootLayer = previewView.layer
+        previewLayer.frame = rootLayer.bounds
+        view.layer.addSublayer(previewLayer)
+        view.addSubview(messageLabel)
     }
     
     override func viewDidLayoutSubviews() {
-        previewLayer.frame = view.frame
+        previewLayer?.frame = view.frame
         
-        if let connection = previewLayer.connection, connection.isVideoOrientationSupported {
+        if let connection = previewLayer?.connection, connection.isVideoOrientationSupported {
             connection.videoOrientation = self.view.window?.windowScene?.interfaceOrientation.videoOrientation ?? .portrait
         }
     }
