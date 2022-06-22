@@ -107,42 +107,74 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                        from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
-        guard let modelURL = Bundle.main.url(forResource: "YOLOv3Tiny", withExtension: "mlmodelc") else {
-            print("Incorrect model url")
-            return
-        }
-        
-        guard let visionModel = try? VNCoreMLModel(for: MLModel(contentsOf: modelURL)) else { return }
-        
-        let request = VNCoreMLRequest(model: visionModel) {
+        let request = VNDetectHumanBodyPoseRequest {
             (request, error) in
             
-            guard let results = request.results as? [VNRecognizedObjectObservation] else { return }
+            guard let results = request.results as? [VNHumanBodyPoseObservation] else { return }
             
             DispatchQueue.main.async {
                 
                 self.detectionOverlay?.sublayers = nil // remove all the old recognized objects
-                
+                                
                 CATransaction.begin()
                 CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
                 
-                for objectObservation in results {
-                    // Select only the label with the highest confidence.
-                    let topLabelObservation = objectObservation.labels[0]
-                    let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(self.bufferSize.width), Int(self.bufferSize.height))
-                    let shapeLayer = self.createRoundedRectLayerWithBounds(objectBounds)
-                    let textLayer = self.createTextSubLayerInBounds(objectBounds, identifier: topLabelObservation.identifier, confidence: topLabelObservation.confidence)
-                    shapeLayer.addSublayer(textLayer)
-                    self.detectionOverlay?.addSublayer(shapeLayer)
+                for poseObservation in results {
+                    guard let recognizedPoints = try? poseObservation.recognizedPoints(.all) else { return }
+                        
+                    let jointNames: [VNHumanBodyPoseObservation.JointName] = [
+                        .root,
+                        .neck,
+                        .leftShoulder,
+                        .rightShoulder,
+                        .leftHip,
+                        .rightHip,
+                        .leftAnkle,
+                        .rightAnkle,
+                        .leftHip,
+                        .rightHip,
+                        .leftKnee,
+                        .rightKnee,
+                        .leftElbow,
+                        .rightElbow,
+                        .leftWrist,
+                        .rightWrist,
+                    ]
+                    
+                    // Retrieve the CGPoints containing the normalized X and Y coordinates.
+                    let imagePoints: [CGPoint] = jointNames.compactMap {
+                        guard let point = recognizedPoints[$0], point.confidence > 0 else { return nil }
+                            
+                        // Translate the point from normalized-coordinates to image coordinates.
+                        return VNImagePointForNormalizedPoint(point.location, Int(self.bufferSize.width), Int(self.bufferSize.height))
+                    }
+                    
+                    // Draw the points onscreen.
+                    for point in imagePoints {
+                        let pointView = self.createPoint(point: point)
+                        self.detectionOverlay?.addSublayer(pointView)
+                    }
                 }
                 
                 self.updateLayerGeometry()
-                
+                                
                 CATransaction.commit()
             }
         }
         
         try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([request])
+    }
+    
+    func createPoint(point: CGPoint) -> CALayer {
+        let dimention = 8.0
+        let bounds = CGRect(x: point.x, y: point.y, width: dimention, height: dimention)
+        let pointLayer = CALayer()
+        pointLayer.name = "Point"
+        pointLayer.bounds = bounds
+        pointLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        pointLayer.backgroundColor = CGColor(red: 1, green: 0, blue: 0, alpha: 0.75)
+        pointLayer.cornerRadius = dimention / 2
+        return pointLayer
     }
     
     func updateLayerGeometry() {
@@ -163,32 +195,6 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         
         CATransaction.commit()
-    }
-    
-    func createRoundedRectLayerWithBounds(_ bounds: CGRect) -> CALayer {
-        let shapeLayer = CALayer()
-        shapeLayer.name = "Found Object"
-        shapeLayer.bounds = bounds
-        shapeLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
-        shapeLayer.backgroundColor = UIColor.green.withAlphaComponent(0.2).cgColor
-        shapeLayer.cornerRadius = 7
-        return shapeLayer
-    }
-    
-    func createTextSubLayerInBounds(_ bounds: CGRect, identifier: String, confidence: VNConfidence) -> CATextLayer {
-        let textLayer = CATextLayer()
-        textLayer.name = "Object Label"
-        let formattedString = NSMutableAttributedString(string: String(format: "\(identifier)\nConfidence:  %.2f", confidence))
-        let largeFont = UIFont(name: "Helvetica", size: 24.0)!
-        formattedString.addAttributes([NSAttributedString.Key.font: largeFont], range: NSRange(location: 0, length: identifier.count))
-        textLayer.string = formattedString
-        textLayer.bounds = CGRect(x: 0, y: 0, width: bounds.size.height - 10, height: bounds.size.width - 10)
-        textLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
-        textLayer.foregroundColor = UIColor.black.cgColor
-        textLayer.contentsScale = 2.0 // retina rendering
-        // rotate the layer into screen orientation and scale and mirror
-        textLayer.setAffineTransform(CGAffineTransform(rotationAngle: CGFloat(.pi / 2.0)).scaledBy(x: 1.0, y: -1.0))
-        return textLayer
     }
 }
 

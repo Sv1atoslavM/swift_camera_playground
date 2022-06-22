@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		80681C7E2862550F00A1CC5C /* YOLOv3Tiny.mlkitmodel in Sources */ = {isa = PBXBuildFile; fileRef = 80681C7D2862550F00A1CC5C /* YOLOv3Tiny.mlkitmodel */; };
 		809C479B2852399C00A15917 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809C479A2852399C00A15917 /* AppDelegate.swift */; };
 		809C479D2852399C00A15917 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809C479C2852399C00A15917 /* SceneDelegate.swift */; };
 		809C479F2852399C00A15917 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809C479E2852399C00A15917 /* ViewController.swift */; };
@@ -17,7 +16,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		80681C7D2862550F00A1CC5C /* YOLOv3Tiny.mlkitmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = YOLOv3Tiny.mlkitmodel; sourceTree = "<group>"; };
 		809C47972852399C00A15917 /* CameraPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CameraPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		809C479A2852399C00A15917 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		809C479C2852399C00A15917 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -65,7 +63,6 @@
 				809C47A32852399C00A15917 /* Assets.xcassets */,
 				809C47A52852399C00A15917 /* LaunchScreen.storyboard */,
 				809C47A82852399C00A15917 /* Info.plist */,
-				80681C7D2862550F00A1CC5C /* YOLOv3Tiny.mlkitmodel */,
 			);
 			path = CameraPlayground;
 			sourceTree = "<group>";
@@ -142,7 +139,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				809C479F2852399C00A15917 /* ViewController.swift in Sources */,
-				80681C7E2862550F00A1CC5C /* YOLOv3Tiny.mlkitmodel in Sources */,
 				809C479B2852399C00A15917 /* AppDelegate.swift in Sources */,
 				809C479D2852399C00A15917 /* SceneDelegate.swift in Sources */,
 			);

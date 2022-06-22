@@ -24,10 +24,10 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="Y9Q-ho-dKF" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="2Ms-Xe-MKx"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Y9Q-ho-dKF" secondAttribute="trailing" id="SxQ-vk-WnO"/>
-                            <constraint firstItem="Y9Q-ho-dKF" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="Ug7-BV-qSz"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="Y9Q-ho-dKF" secondAttribute="bottom" id="fVw-C6-rK5"/>
+                            <constraint firstItem="Y9Q-ho-dKF" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="2Ms-Xe-MKx"/>
+                            <constraint firstAttribute="trailing" secondItem="Y9Q-ho-dKF" secondAttribute="trailing" id="SxQ-vk-WnO"/>
+                            <constraint firstItem="Y9Q-ho-dKF" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" constant="44" id="Ug7-BV-qSz"/>
+                            <constraint firstAttribute="bottom" secondItem="Y9Q-ho-dKF" secondAttribute="bottom" constant="34" id="fVw-C6-rK5"/>
                         </constraints>
                     </view>
                     <connections>
