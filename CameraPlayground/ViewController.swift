@@ -11,8 +11,6 @@ import Vision
 
 class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     
-    @IBOutlet var previewView: UIView!
-    
     // Helps to transfer data between one or more device inputs like camera or microphone
     let captureSession = AVCaptureSession()
     // Helps to render the camera view finder in the ViewController
@@ -20,8 +18,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     let videoDataOutputQueue = DispatchQueue(label: "VideoDataOutput", qos: .userInitiated, attributes: [], autoreleaseFrequency: .workItem)
 
-    var bufferSize: CGSize = .zero
+    var rootView: UIView! = nil
     var detectionOverlay: CALayer! = nil
+    var bufferSize: CGSize = .zero
     
     
     override func viewDidAppear(_ animated: Bool) {
@@ -35,6 +34,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        rootView = view
         captureSession.beginConfiguration()
         captureSession.sessionPreset = .vga640x480
         
@@ -78,27 +78,27 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         captureSession.commitConfiguration()
         
-        let bounds = previewView.layer.bounds
+        let bounds = rootView.layer.bounds
         
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.videoGravity = .resizeAspectFill
         previewLayer.frame = bounds
-        view.layer.addSublayer(previewLayer)
+        rootView.layer.addSublayer(previewLayer)
         
         detectionOverlay = CALayer() // container layer that has all the renderings of the observations
         detectionOverlay.name = "DetectionOverlay"
         detectionOverlay.bounds = CGRect(x: 0.0, y: 0.0, width: bufferSize.width, height: bufferSize.height)
         detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
-        view.layer.addSublayer(detectionOverlay)
+        rootView.layer.addSublayer(detectionOverlay)
         
         updateLayerGeometry()
     }
     
     override func viewDidLayoutSubviews() {
-        previewLayer?.frame = view.frame
+        previewLayer?.frame = rootView.frame
         
         if let connection = previewLayer?.connection, connection.isVideoOrientationSupported {
-            connection.videoOrientation = self.view.window?.windowScene?.interfaceOrientation.videoOrientation ?? .portrait
+            connection.videoOrientation = self.rootView.window?.windowScene?.interfaceOrientation.videoOrientation ?? .portrait
         }
     }
     
@@ -123,22 +123,29 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                     guard let recognizedPoints = try? poseObservation.recognizedPoints(.all) else { return }
                         
                     let jointNames: [VNHumanBodyPoseObservation.JointName] = [
-                        .root,
+                        // Head
+                        .leftEar,
+                        .rightEar,
+                        .leftEye,
+                        .rightEye,
                         .neck,
+                        .nose,
+                        // Arms
                         .leftShoulder,
                         .rightShoulder,
-                        .leftHip,
-                        .rightHip,
-                        .leftAnkle,
-                        .rightAnkle,
-                        .leftHip,
-                        .rightHip,
-                        .leftKnee,
-                        .rightKnee,
                         .leftElbow,
                         .rightElbow,
                         .leftWrist,
                         .rightWrist,
+                        // Waist
+                        .root,
+                        // Legs
+                        .leftHip,
+                        .rightHip,
+                        .leftKnee,
+                        .rightKnee,
+                        .leftAnkle,
+                        .rightAnkle,
                     ]
                     
                     // Retrieve the CGPoints containing the normalized X and Y coordinates.
@@ -154,6 +161,10 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                         let pointView = self.createPoint(point: point)
                         self.detectionOverlay?.addSublayer(pointView)
                     }
+                    
+                    // Draw a rectangle by points
+                    let rectView = self.createRectangle(points: imagePoints)
+                    self.detectionOverlay?.addSublayer(rectView)
                 }
                 
                 self.updateLayerGeometry()
@@ -166,7 +177,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     }
     
     func createPoint(point: CGPoint) -> CALayer {
-        let dimention = 8.0
+        let dimention = 4.0
         let bounds = CGRect(x: point.x, y: point.y, width: dimention, height: dimention)
         let pointLayer = CALayer()
         pointLayer.name = "Point"
@@ -177,8 +188,22 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         return pointLayer
     }
     
+    func createRectangle(points: [CGPoint]) -> CALayer {
+        let coordX = points.map{$0.x}
+        let coordY = points.map{$0.y}
+        let begin = CGPoint(x: coordX.min()!, y: coordY.min()!)
+        let end = CGPoint(x: coordX.max()!, y: coordY.max()!)
+        let bounds = CGRect(origin: begin, size: CGSize(width: end.x - begin.x, height: end.y - begin.y))
+        let pointLayer = CALayer()
+        pointLayer.name = "Shape"
+        pointLayer.bounds = bounds
+        pointLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        pointLayer.backgroundColor = CGColor(red: 0, green: 1, blue: 0, alpha: 0.25)
+        return pointLayer
+    }
+    
     func updateLayerGeometry() {
-        let bounds = previewView.layer.bounds
+        let bounds = rootView.layer.bounds
         let xScale: CGFloat = bounds.size.width / bufferSize.height
         let yScale: CGFloat = bounds.size.height / bufferSize.width
         
