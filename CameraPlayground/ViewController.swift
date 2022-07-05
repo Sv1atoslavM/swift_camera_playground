@@ -55,6 +55,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             videoDataOutput.alwaysDiscardsLateVideoFrames = true
             videoDataOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
             videoDataOutput.setSampleBufferDelegate(self, queue: videoDataOutputQueue)
+            videoDataOutput.connection(with: .video)?.isEnabled = true // always process the frames
             captureSession.addOutput(videoDataOutput)
         } else {
             print("Could not add video data output to the session")
@@ -62,10 +63,6 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             return
         }
         
-        let captureConnection = videoDataOutput.connection(with: .video)
-        
-        // Always process the frames
-        captureConnection?.isEnabled = true
         do {
             try captureDevice.lockForConfiguration()
             let dimensions = CMVideoFormatDescriptionGetDimensions(captureDevice.activeFormat.formatDescription)
@@ -78,28 +75,39 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         captureSession.commitConfiguration()
         
-        let bounds = rootView.layer.bounds
-        
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer.name = "PreviewLayer"
         previewLayer.videoGravity = .resizeAspectFill
-        previewLayer.frame = bounds
         rootView.layer.addSublayer(previewLayer)
         
         detectionOverlay = CALayer() // container layer that has all the renderings of the observations
         detectionOverlay.name = "DetectionOverlay"
-        detectionOverlay.bounds = CGRect(x: 0.0, y: 0.0, width: bufferSize.width, height: bufferSize.height)
-        detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         rootView.layer.addSublayer(detectionOverlay)
+    }
+    
+    override func viewDidLayoutSubviews() {
+        let bounds = rootView.layer.bounds
+        
+        previewLayer?.frame = bounds
+        
+        detectionOverlay.bounds = CGRect(origin: CGPoint(x: 0, y: 0), size: bufferSize)
+        detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        
+        if let connection = previewLayer?.connection, connection.isVideoOrientationSupported {
+            connection.videoOrientation = rootView.window?.windowScene?.interfaceOrientation.videoOrientation ?? .portrait
+        }
         
         updateLayerGeometry()
     }
     
-    override func viewDidLayoutSubviews() {
-        previewLayer?.frame = rootView.frame
+    override func viewWillTransition(to size: CGSize,
+                                     with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
         
-        if let connection = previewLayer?.connection, connection.isVideoOrientationSupported {
-            connection.videoOrientation = self.rootView.window?.windowScene?.interfaceOrientation.videoOrientation ?? .portrait
-        }
+        // swap buffer sides
+        let temp = bufferSize.height
+        bufferSize.height = bufferSize.width
+        bufferSize.width = temp
     }
     
     func captureOutput(_ output: AVCaptureOutput,
@@ -107,7 +115,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                        from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
-        let request = VNDetectHumanBodyPoseRequest {
+        let detectHumanBodyPoseRequest = VNDetectHumanBodyPoseRequest {
             (request, error) in
             
             guard let results = request.results as? [VNHumanBodyPoseObservation] else { return }
@@ -173,7 +181,8 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             }
         }
         
-        try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([request])
+        let exifOrientation = exifOrientationFromDeviceOrientation()
+        try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: exifOrientation, options: [:]).perform([detectHumanBodyPoseRequest])
     }
     
     func createPoint(point: CGPoint) -> CALayer {
@@ -220,6 +229,21 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         
         CATransaction.commit()
+    }
+    
+    func exifOrientationFromDeviceOrientation() -> CGImagePropertyOrientation {
+        switch UIDevice.current.orientation {
+        case .portraitUpsideDown:
+            return .down
+        case .landscapeRight:
+            return .right
+        case .landscapeLeft:
+            return .left
+        case .portrait:
+            return .up
+        default:
+            return .up
+        }
     }
 }
 
