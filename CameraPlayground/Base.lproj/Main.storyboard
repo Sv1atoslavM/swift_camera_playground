@@ -15,9 +15,24 @@
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="6Ux-XM-XXK">
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                            </view>
+                        </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="6Ux-XM-XXK" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="NKI-Iq-jB7"/>
+                            <constraint firstAttribute="trailing" secondItem="6Ux-XM-XXK" secondAttribute="trailing" id="fVV-Ya-A8i"/>
+                            <constraint firstAttribute="bottom" secondItem="6Ux-XM-XXK" secondAttribute="bottom" id="g6u-h8-L9K"/>
+                            <constraint firstItem="6Ux-XM-XXK" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="pLQ-EW-aVx"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="previewView" destination="6Ux-XM-XXK" id="EHM-Qd-3cP"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>

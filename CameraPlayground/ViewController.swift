@@ -11,6 +11,8 @@ import Vision
 
 class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     
+    @IBOutlet weak var previewView: UIView!
+    
     // Helps to transfer data between one or more device inputs like camera or microphone
     let captureSession = AVCaptureSession()
     // Helps to render the camera view finder in the ViewController
@@ -78,11 +80,11 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.name = "PreviewLayer"
         previewLayer.videoGravity = .resizeAspectFill
-        rootView.layer.addSublayer(previewLayer)
+        previewView.layer.addSublayer(previewLayer)
         
         detectionOverlay = CALayer() // container layer that has all the renderings of the observations
         detectionOverlay.name = "DetectionOverlay"
-        rootView.layer.addSublayer(detectionOverlay)
+        previewView.layer.addSublayer(detectionOverlay)
     }
     
     override func viewDidLayoutSubviews() {
