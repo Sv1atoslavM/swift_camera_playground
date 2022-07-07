@@ -22,6 +22,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
 
     var rootView: UIView! = nil
     var detectionOverlay: CALayer! = nil
+    var inputImageOrientation: CGImagePropertyOrientation! = .up
     var bufferSize: CGSize = .zero
     
     
@@ -82,39 +83,49 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         previewLayer.videoGravity = .resizeAspectFill
         previewView.layer.addSublayer(previewLayer)
         
+        let bounds = rootView.layer.bounds
+        
         detectionOverlay = CALayer() // container layer that has all the renderings of the observations
         detectionOverlay.name = "DetectionOverlay"
+        detectionOverlay.bounds = CGRect(origin: .zero, size: bufferSize)
+        detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         previewView.layer.addSublayer(detectionOverlay)
     }
     
     override func viewDidLayoutSubviews() {
-        let bounds = rootView.layer.bounds
         
-        previewLayer?.frame = bounds
-        
-        detectionOverlay.bounds = CGRect(origin: CGPoint(x: 0, y: 0), size: bufferSize)
-        detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        previewLayer?.frame = rootView.frame
         
         if let connection = previewLayer?.connection, connection.isVideoOrientationSupported {
-            connection.videoOrientation = rootView.window?.windowScene?.interfaceOrientation.videoOrientation ?? .portrait
+            
+            let interfaceOrientation = rootView.window?.windowScene?.interfaceOrientation
+            
+            switch interfaceOrientation {
+            case .portraitUpsideDown:
+                connection.videoOrientation = .portraitUpsideDown
+                inputImageOrientation = .down
+            case .landscapeRight:
+                connection.videoOrientation = .landscapeRight
+                inputImageOrientation = .left
+            case .landscapeLeft:
+                connection.videoOrientation = .landscapeLeft
+                inputImageOrientation = .right
+            case .portrait:
+                connection.videoOrientation = .portrait
+                inputImageOrientation = .up
+            default:
+                connection.videoOrientation = .portrait
+                inputImageOrientation = .up
+            }
         }
         
         updateLayerGeometry()
     }
     
-    override func viewWillTransition(to size: CGSize,
-                                     with coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransition(to: size, with: coordinator)
-        
-        // swap buffer sides
-        let temp = bufferSize.height
-        bufferSize.height = bufferSize.width
-        bufferSize.width = temp
-    }
-    
     func captureOutput(_ output: AVCaptureOutput,
                        didOutput sampleBuffer: CMSampleBuffer,
                        from connection: AVCaptureConnection) {
+        
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
         let detectHumanBodyPoseRequest = VNDetectHumanBodyPoseRequest {
@@ -183,8 +194,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             }
         }
         
-        let exifOrientation = exifOrientationFromDeviceOrientation()
-        try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: exifOrientation, options: [:]).perform([detectHumanBodyPoseRequest])
+        try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: inputImageOrientation, options: [:]).perform([detectHumanBodyPoseRequest])
     }
     
     func createPoint(point: CGPoint) -> CALayer {
@@ -231,37 +241,5 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         
         CATransaction.commit()
-    }
-    
-    func exifOrientationFromDeviceOrientation() -> CGImagePropertyOrientation {
-        switch UIDevice.current.orientation {
-        case .portraitUpsideDown:
-            return .down
-        case .landscapeRight:
-            return .right
-        case .landscapeLeft:
-            return .left
-        case .portrait:
-            return .up
-        default:
-            return .up
-        }
-    }
-}
-
-extension UIInterfaceOrientation {
-    var videoOrientation: AVCaptureVideoOrientation? {
-        switch self {
-        case .portraitUpsideDown:
-            return .portraitUpsideDown
-        case .landscapeRight:
-            return .landscapeRight
-        case .landscapeLeft:
-            return .landscapeLeft
-        case .portrait:
-            return .portrait
-        default:
-            return nil
-        }
     }
 }
