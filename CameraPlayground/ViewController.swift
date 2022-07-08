@@ -95,7 +95,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     override func viewDidLayoutSubviews() {
         
-        previewLayer.frame = rootView.layer.bounds
+        let bounds = rootView.layer.bounds
+        
+        previewLayer.frame = bounds
         
         if let connection = previewLayer.connection, connection.isVideoOrientationSupported {
             
@@ -120,20 +122,23 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             }
         }
         
-        detectionOverlay.bounds = CGRect(origin: .zero, size: bufferSize)
-        detectionOverlay.position = CGPoint(x: previewLayer.bounds.midX, y: previewLayer.bounds.midY)
-        
-        updateLayerGeometry()
-    }
-    
-    override func viewWillTransition(to size: CGSize,
-                                     with coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransition(to: size, with: coordinator)
+        let longestSide = fmax(bufferSize.width, bufferSize.height)
+        let shortestSide = fmin(bufferSize.width, bufferSize.height)
+        let aspectRatio = bounds.width / bounds.height
         
         // swap buffer sides
-        let temp = bufferSize.height
-        bufferSize.height = bufferSize.width
-        bufferSize.width = temp
+        if aspectRatio > 1 {
+            bufferSize.width = shortestSide
+            bufferSize.height = longestSide
+        } else {
+            bufferSize.width = longestSide
+            bufferSize.height = shortestSide
+        }
+        
+        detectionOverlay.bounds = CGRect(origin: .zero, size: bufferSize)
+        detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        
+        updateLayerGeometry()
     }
     
     func captureOutput(_ output: AVCaptureOutput,
