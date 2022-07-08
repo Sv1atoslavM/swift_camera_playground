@@ -89,7 +89,6 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         detectionOverlay = CALayer() // container layer that has all the renderings of the observations
         detectionOverlay.name = "DetectionOverlay"
-        detectionOverlay.bounds = CGRect(origin: .zero, size: bufferSize)
         previewView.layer.addSublayer(detectionOverlay)
     }
     
@@ -127,11 +126,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         // swap buffer sides
         if bounds.width > bounds.height {
-            bufferSize.width = shortestSide
-            bufferSize.height = longestSide
+            bufferSize = CGSize(width: shortestSide, height: longestSide)
         } else {
-            bufferSize.width = longestSide
-            bufferSize.height = shortestSide
+            bufferSize = CGSize(width: longestSide, height: shortestSide)
         }
         
         detectionOverlay.bounds = CGRect(origin: .zero, size: bufferSize)
@@ -189,11 +186,10 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     func createPoint(point: CGPoint) -> CALayer {
         let dimention = 8.0
-        let bounds = CGRect(x: point.x, y: point.y, width: dimention, height: dimention)
         let pointLayer = CALayer()
         pointLayer.name = "Point"
-        pointLayer.bounds = bounds
-        pointLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        pointLayer.bounds = CGRect(origin: .zero, size: CGSize(width: dimention, height: dimention))
+        pointLayer.position = point
         pointLayer.backgroundColor = CGColor(red: 1, green: 0, blue: 0, alpha: 0.75)
         pointLayer.cornerRadius = dimention / 2
         return pointLayer
@@ -202,9 +198,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     func createRectangle(points: [CGPoint]) -> CALayer {
         let coordX = points.map{$0.x}
         let coordY = points.map{$0.y}
-        let begin = CGPoint(x: coordX.min()!, y: coordY.min()!)
-        let end = CGPoint(x: coordX.max()!, y: coordY.max()!)
-        let bounds = CGRect(origin: begin, size: CGSize(width: end.x - begin.x, height: end.y - begin.y))
+        let min = CGPoint(x: coordX.min()!, y: coordY.min()!)
+        let max = CGPoint(x: coordX.max()!, y: coordY.max()!)
+        let bounds = CGRect(origin: min, size: CGSize(width: max.x - min.x, height: max.y - min.y))
         let pointLayer = CALayer()
         pointLayer.name = "Shape"
         pointLayer.bounds = bounds
@@ -215,8 +211,8 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     func updateLayerGeometry() {
         let bounds = rootView.layer.bounds
-        let xScale: CGFloat = bounds.width / bufferSize.height
-        let yScale: CGFloat = bounds.height / bufferSize.width
+        let xScale = bounds.width / bufferSize.height
+        let yScale = bounds.height / bufferSize.width
         
         var scale = fmax(xScale, yScale)
 
