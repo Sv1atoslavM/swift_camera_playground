@@ -43,7 +43,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         rootView = view
         captureSession.beginConfiguration()
-        captureSession.sessionPreset = .vga640x480
+        captureSession.sessionPreset = .high
         
         guard let captureDevice = AVCaptureDevice.default(for: .video) else { return }
         guard let input = try? AVCaptureDeviceInput(device: captureDevice) else { return }
@@ -95,11 +95,11 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     override func viewDidLayoutSubviews() {
         
-        let interfaceOrientation = rootView.window?.windowScene?.interfaceOrientation
-        
-        previewLayer.frame = rootView.frame
+        previewLayer.frame = rootView.layer.bounds
         
         if let connection = previewLayer.connection, connection.isVideoOrientationSupported {
+            
+            let interfaceOrientation = rootView.window?.windowScene?.interfaceOrientation
             
             switch interfaceOrientation {
             case .portraitUpsideDown:
@@ -120,7 +120,20 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             }
         }
         
+        detectionOverlay.bounds = CGRect(origin: .zero, size: bufferSize)
+        detectionOverlay.position = CGPoint(x: previewLayer.bounds.midX, y: previewLayer.bounds.midY)
+        
         updateLayerGeometry()
+    }
+    
+    override func viewWillTransition(to size: CGSize,
+                                     with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        
+        // swap buffer sides
+        let temp = bufferSize.height
+        bufferSize.height = bufferSize.width
+        bufferSize.width = temp
     }
     
     func captureOutput(_ output: AVCaptureOutput,
@@ -162,7 +175,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                 }
                 
                 self.updateLayerGeometry()
-                                
+                
                 CATransaction.commit()
             }
         }
