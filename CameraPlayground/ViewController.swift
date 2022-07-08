@@ -43,7 +43,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         rootView = view
         captureSession.beginConfiguration()
-        captureSession.sessionPreset = .vga640x480
+        captureSession.sessionPreset = .high
         
         guard let captureDevice = AVCaptureDevice.default(for: .video) else { return }
         guard let input = try? AVCaptureDeviceInput(device: captureDevice) else { return }
@@ -95,11 +95,13 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     override func viewDidLayoutSubviews() {
         
-        let interfaceOrientation = rootView.window?.windowScene?.interfaceOrientation
+        let bounds = rootView.layer.bounds
         
-        previewLayer.frame = rootView.frame
+        previewLayer.frame = bounds
         
         if let connection = previewLayer.connection, connection.isVideoOrientationSupported {
+            
+            let interfaceOrientation = rootView.window?.windowScene?.interfaceOrientation
             
             switch interfaceOrientation {
             case .portraitUpsideDown:
@@ -119,6 +121,22 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                 inputImageOrientation = .up
             }
         }
+        
+        let longestSide = fmax(bufferSize.width, bufferSize.height)
+        let shortestSide = fmin(bufferSize.width, bufferSize.height)
+        let aspectRatio = bounds.width / bounds.height
+        
+        // swap buffer sides
+        if aspectRatio > 1 {
+            bufferSize.width = shortestSide
+            bufferSize.height = longestSide
+        } else {
+            bufferSize.width = longestSide
+            bufferSize.height = shortestSide
+        }
+        
+        detectionOverlay.bounds = CGRect(origin: .zero, size: bufferSize)
+        detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         
         updateLayerGeometry()
     }
@@ -162,7 +180,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                 }
                 
                 self.updateLayerGeometry()
-                                
+                
                 CATransaction.commit()
             }
         }
