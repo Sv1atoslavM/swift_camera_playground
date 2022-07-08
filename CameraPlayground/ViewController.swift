@@ -124,10 +124,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         let longestSide = fmax(bufferSize.width, bufferSize.height)
         let shortestSide = fmin(bufferSize.width, bufferSize.height)
-        let aspectRatio = bounds.width / bounds.height
         
         // swap buffer sides
-        if aspectRatio > 1 {
+        if bounds.width > bounds.height {
             bufferSize.width = shortestSide
             bufferSize.height = longestSide
         } else {
@@ -189,7 +188,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     }
     
     func createPoint(point: CGPoint) -> CALayer {
-        let dimention = 4.0
+        let dimention = 8.0
         let bounds = CGRect(x: point.x, y: point.y, width: dimention, height: dimention)
         let pointLayer = CALayer()
         pointLayer.name = "Point"
