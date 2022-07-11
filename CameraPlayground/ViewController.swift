@@ -12,6 +12,7 @@ import Vision
 class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     
     @IBOutlet weak var previewView: UIView!
+    @IBOutlet weak var capturedImageView: UIImageView!
     
     // Helps to transfer data between one or more device inputs like camera or microphone
     let captureSession = AVCaptureSession()
@@ -124,7 +125,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         let longestSide = fmax(bufferSize.width, bufferSize.height)
         let shortestSide = fmin(bufferSize.width, bufferSize.height)
         
-        // swap buffer sides
+        // Swap buffer sides
         if bounds.width > bounds.height {
             bufferSize = CGSize(width: shortestSide, height: longestSide)
         } else {
@@ -142,6 +143,8 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                        from connection: AVCaptureConnection) {
         
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        
+        var capturedImage: UIImage?
         
         let detectHumanBodyPoseRequest = VNDetectHumanBodyPoseRequest {
             (request, error) in
@@ -164,17 +167,23 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                         $0.confidence > 0 ? VNImagePointForNormalizedPoint($0.location, Int(self.bufferSize.width), Int(self.bufferSize.height)) : nil
                     }
                     
-                    // Draw the points onscreen.
+                    // Draw the points onscreen
                     for point in imagePoints {
                         let pointView = self.createPoint(point: point)
                         self.detectionOverlay?.addSublayer(pointView)
                     }
                     
-                    // Draw a rectangle by points
-                    let rectView = self.createRectangle(points: imagePoints)
-                    self.detectionOverlay?.addSublayer(rectView)
+                    // Crop captured image based on the points
+                    let coordX = imagePoints.map{$0.x}
+                    let coordY = imagePoints.map{$0.y}
+                    let begin = CGPoint(x: coordX.min()!, y: coordY.min()!)
+                    let end = CGPoint(x: coordX.max()!, y: coordY.max()!)
+                    let size = CGSize(width: end.x - begin.x, height: end.y - begin.y)
+                    let rect = CGRect(origin: begin, size: size)
+                    capturedImage = self.getCroppedImageFrom(pixelBuffer, cropTo: rect)
                 }
                 
+                self.capturedImageView.image = capturedImage
                 self.updateLayerGeometry()
                 
                 CATransaction.commit()
@@ -195,21 +204,20 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         return pointLayer
     }
     
-    func createRectangle(points: [CGPoint]) -> CALayer {
-        let coordX = points.map{$0.x}
-        let coordY = points.map{$0.y}
-        let min = CGPoint(x: coordX.min()!, y: coordY.min()!)
-        let max = CGPoint(x: coordX.max()!, y: coordY.max()!)
-        let bounds = CGRect(origin: min, size: CGSize(width: max.x - min.x, height: max.y - min.y))
-        let pointLayer = CALayer()
-        pointLayer.name = "Shape"
-        pointLayer.bounds = bounds
-        pointLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
-        pointLayer.backgroundColor = CGColor(red: 0, green: 1, blue: 0, alpha: 0.25)
-        return pointLayer
+    func getCroppedImageFrom(_ buffer: CVImageBuffer, cropTo rect: CGRect) -> UIImage? {
+        
+        let ciimage = CIImage(cvImageBuffer: buffer)
+        let croppedImage = ciimage.oriented(inputImageOrientation).cropped(to: rect)
+        
+        if let cgImage = CIContext().createCGImage(croppedImage, from: croppedImage.extent) {
+            return UIImage(cgImage: cgImage)
+        }
+        
+        return nil
     }
     
     func updateLayerGeometry() {
+        
         let bounds = rootView.layer.bounds
         let xScale = bounds.width / bufferSize.height
         let yScale = bounds.height / bufferSize.width
@@ -221,9 +229,12 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         CATransaction.begin()
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
         
-        // rotate the layer into screen orientation and scale and mirror
-        detectionOverlay.setAffineTransform(CGAffineTransform(rotationAngle: CGFloat(.pi / 2.0)).scaledBy(x: scale, y: -scale))
-        // center the layer
+        let rotationAngle = CGFloat(.pi / 2.0)
+        
+        capturedImageView.layer.setAffineTransform(CGAffineTransform(rotationAngle: rotationAngle))
+        // Rotate the layer into screen orientation and scale and mirror
+        detectionOverlay.setAffineTransform(CGAffineTransform(rotationAngle: rotationAngle).scaledBy(x: scale, y: -scale))
+        // Center the layer
         detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         
         CATransaction.commit()
